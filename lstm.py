@@ -15,6 +15,7 @@ import tensorflow as tf
 import keras
 
 ### Preprocessing the data (timesteps, number of inputs)
+### We changed of dataset here to have more different reviews. Ours were too similar and the model was underfit
 
 df = pd.read_csv("Restaurant_Reviews.tsv", delimiter = '\t', engine = 'python', encoding = 'utf-8')
 y = df.iloc[:,1].values
@@ -36,12 +37,14 @@ for text in df:
             review_cleaned.append(stemmer.stem(word))
     review_cleaned = ' '.join(review_cleaned)
     corpus.append(review_cleaned)
-    
+
+### The first approach for combining LSTM with sentiment analysis was to transform our dataset in a bag of word model and put a one hot encoded sentence into the LSTM 
+### So here a word missing or not is equivalent to a timesteps 
 from sklearn.feature_extraction.text import CountVectorizer
 
 cv = CountVectorizer(max_features = 300)
 X = cv.fit_transform(corpus).toarray()
-print(X.shape)
+print("X_shape : " + str(X.shape))
 X = np.reshape(X,(X.shape[0],X.shape[1],1))
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2)
@@ -65,6 +68,8 @@ model.add(tf.keras.layers.Dense(units = 1, activation = 'sigmoid'))
 model.compile(optimizer = 'adam', loss ='binary_crossentropy', metrics = ['accuracy'])
 
 model.fit(X_train, y_train, epochs = 100, batch_size = 32)
+
+### The model was not converging, probably because it was not the good approach and secondly because there are a lot of weights in this neural networks
 
 model.summary()
 
