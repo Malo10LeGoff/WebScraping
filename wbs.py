@@ -5,7 +5,7 @@ Created on Fri Jul 10 11:04:39 2020
 @author: LENOVO
 """
 """
-Implementation of a sentiment analysis algorithm from collecting the data
+Implementation of a web scraping algorithm for collecting the dataset needed to train several machine learning models
 """
 
 ### Imports
@@ -17,57 +17,7 @@ import tensorflow as tf
 import bs4
 from urllib.request import urlopen
 
-### Collecting data
-
-raw_html = urlopen("https://www.tripadvisor.fr/Restaurants-g187147-Paris_Ile_de_France.html")
-page_html = raw_html.read()
-raw_html.close()
-soup1 = bs4.BeautifulSoup(page_html,'lxml')
-soup1
-
-names_restaurants = []
-names_container = soup1.find_all('div', {'class' : '_1llCuDZj'})
-names_container
-L = names_container[2].span.div.div.span.a['href'].split('-')
-nr = ''
-d = 0
-f = 0
-for j in range(0,len(L)):
-    if L[j] == 'Reviews':
-        d = j
-        print(d)
-    if L[j] == 'Paris_Ile_de_France.html':
-        f = j
-nr = L[d+1:f]
-
-filename = 'restaurant.csv'
-file = open(filename,'w')
-headers = 'restaurants, review'
-file.write(headers)
-
-for i in range(1, len(names_container)):
-    a_tag = names_container[i].span.div.div.span.a['href']
-    #print(i)
-    #print(a_tag)
-    L = a_tag.split('-')
-    nr = ''
-    d = 0
-    f = 0
-    for j in range(0,len(L)):
-        if L[j] == 'Reviews':
-            d = j
-        if L[j] == 'Paris_Ile_de_France.html':
-            f = j
-    nr = L[d+1:f]
-    file.write(nr[0] + ','+'None'+'\n')
-    print(nr[0])
-    names_restaurants.append(nr)
-
-file.close()
-    
-df = pd.read_csv('restaurant.csv')
-    
-### New Scraping
+### Collecting data from the page trip advisor listing several restaurants reviews to train our scraping skills
 
 import requests
 raw_html2 = urlopen('https://www.tripadvisor.fr/Restaurant_Review-g1136257-d8599271-Reviews-Le_Scoop-Yffiniac_Cotes_d_Armor_Brittany.html')
@@ -76,10 +26,8 @@ raw_html2.close()
 soup = bs4.BeautifulSoup(page_html2,'html.parser')
 soup.find('span',{'class': 'noQuotes'})
 soup.div['class']
-soup
 
 container = soup.find_all('span', {'class' : "noQuotes"})
-container[0].text
 reviews = []
 filename = 'reviews.csv'
 f = open(filename,'w', encoding="utf-8")
@@ -89,8 +37,9 @@ f.write(headers + '\n')
 for element in container:
     review = element.text
     reviews.append(review)
-    f.write(review + '::' + 'None' + '\n')
+    f.write(review + '::' + 'None' + '\n')  ### We use :: as a seprator because a coma can be present in several reviews, breaking the scraping
     
+### To get more reviews, we scrap on several pages    
     
 raw_html3 = urlopen('https://www.tripadvisor.fr/Restaurant_Review-g1136257-d8599271-Reviews-or10-Le_Scoop-Yffiniac_Cotes_d_Armor_Brittany.html') 
 page_html3 = raw_html3.read()
@@ -126,7 +75,8 @@ for element in container:
     reviews.append(review)
     f.write(review +'::'+'None'+'\n')
     
-for i in range(1,148):
+### There is a pattern in the way the url are written so we can use it to create a loop over all the pages   
+for i in range(0,148):
     if i == 0:
         raw_html = urlopen('https://www.tripadvisor.fr/Restaurant_Review-g187089-d1881625-Reviews-La_Vieille_Auberge-Saint_Jean_de_Luz_Basque_Country_Pyrenees_Atlantiques_Nouvelle.html')
     else:
@@ -141,10 +91,8 @@ for i in range(1,148):
         reviews.append(review)
         f.write(review + '::' + 'None' + '\n')
         
-        
-### Label each bad review with 0    
-
-
-
+       
 f.close()
 
+### Now we have to create our labels. To do this, we just have to label the bad review with a zero (that's quite fast because there are not many bad reviews).
+### And then we'll do a loop over our dataframe to fill the rest of the reviews with one. It would mean that thay are positive reviews.
